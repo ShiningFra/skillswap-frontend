@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Palette de la maquette. Contrastes vérifiés pour le texte courant (au moins 4,5 : 1). */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-fond: #f5f6f2;
+  --color-surface: #ffffff;
+  --color-encre: #14211d;
+  --color-discret: #52605a;
+  --color-bord: #c9d0ca;
+  --color-trait: #e1e5df;
+  --color-marque: #0e6b5c;
+  --color-marque-fonce: #0a4f44;
+  --color-marque-doux: #ddefea;
+  --color-alerte: #8a2222;
+  --color-alerte-doux: #fbe9e7;
+  --color-avertissement: #6b3a04;
+  --color-avertissement-doux: #fcefd8;
+  /* Manrope de la maquette, servie par l'application elle-même (aucune requête vers un service tiers). */
+  --font-sans: "Manrope Variable", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-fond);
+  color: var(--color-encre);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-marque);
+  outline-offset: 2px;
 }

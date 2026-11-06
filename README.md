@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SkillSwap Web (Next.js, TypeScript)
 
-## Getting Started
-
-First, run the development server:
+## Lancer
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deux modes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Simulé (par défaut)** : aucune API nécessaire, les données restent en mémoire. Code SMS de test : `123456`.
+- **Réel** : copie `.env.local.example` en `.env.local`, démarre l'API (`skillswap-api`, port 3001) et la base PostgreSQL, puis relance `npm run dev`.
+  Tout passe par l'API : inscription, connexion, code SMS (affiché dans la console de l'API en développement), localisation,
+  compétences, recherche, profils, messages, sessions, avis, signalements.
+  Limite connue : pour proposer une session, l'API prend la compétence de l'enseignant s'il n'en offre qu'une seule ; s'il en offre
+  plusieurs, l'écran devra la demander (pas encore fait).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+L'API n'accepte que l'origine `http://localhost:3000` (variable `ALLOWED_ORIGIN` côté API) ; garde donc ce port.
 
-## Learn More
+## Vérifier
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run typecheck && npm run lint && npm test && npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Écrans (conformes à la maquette cliquable)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Accueil « Pour toi » (`/accueil`, avec la cloche), Notifications (`/notifications`), Recherche (champ texte et filtres de format),
+profil d'un membre, conversation, proposition de session, détail de session, avis, signalement. Police Manrope (paquet
+`@fontsource-variable/manrope`, servie par l'application). Navigation : Accueil, Recherche, Messages, Profil ; « Tes sessions » se trouve
+dans Profil. Pas encore faits : écran d'administration, et la page Compétences reste un formulaire (la maquette est une liste).
 
-## Deploy on Vercel
+## Écran Administration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`/admin` (réservé au rôle ADMIN côté API) : indicateurs des 30 jours, file des signalements ouverts, historique du membre signalé et décisions avertir / suspendre / rejeter. En mode simulé, des données d'exemple sont affichées.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Écrans de gestion du compte
+
+`/creneaux` (mes disponibilités : ajouter, annuler), `/competences` (modifier ou retirer une compétence), `/compte` (profil, localisation, mot de passe, déconnexion, suppression). Accessibles depuis l'onglet Profil.
+
+## Mot de passe oublié et changement de numéro (v0.11)
+`/connexion` → « Mot de passe oublié ? » → `/mot-de-passe-oublie` (réponse neutre) → lien reçu par mail → `/reinitialisation?jeton=…`. Le changement de numéro se fait depuis `/compte` → `/compte/telephone` (même écran de code à 6 cases que l'inscription).
+
+## Mon compte (v0.12)
+`/compte` est un menu d'options : Modifier mon profil (`/compte/profil`), Localisation, Téléphone (`/compte/telephone`), Mot de passe (`/compte/mot-de-passe`), Mes disponibilités, Se déconnecter, Supprimer mon compte (`/compte/suppression`). Chaque option a son écran.
+
+## Cas d'échec (v0.12.2)
+Le script `e2e/run9.js` joue 36 cas d'échec dans le navigateur contre l'API réelle (inscription, connexion bloquée ou suspendue, codes SMS faux, expirés ou en trop grand nombre, numéro déjà pris, créneau pris, session déjà traitée, avis trop tôt ou en double, signalement en double, message vide ou trop long, membre supprimé, serveur arrêté).
