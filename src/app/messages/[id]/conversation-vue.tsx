@@ -90,7 +90,7 @@ export function ConversationVue({ id }: { id: string }) {
 
   return (
     <main className="mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden bg-fond">
-      <header className="flex shrink-0 items-center gap-2 border-b-[1.5px] border-trait bg-surface px-3 pb-2.5 pt-6">
+      <header className="flex shrink-0 items-center gap-2 border-b-[1.5px] border-trait bg-surface pb-2.5 pl-3 pr-16 pt-6">
         <LienRetour href="/messages" label={te("common.retour")} />
         <Link href={membreId ? `/profils/${membreId}` : "/messages"} className="flex flex-1 items-center gap-2.5">
           <Avatar pseudo={pseudo || "?"} taille={40} />

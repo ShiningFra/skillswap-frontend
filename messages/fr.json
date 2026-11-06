@@ -4,6 +4,7 @@
   },
   "common": {
     "retour": "Retour",
+    "fermer": "Fermer",
     "continuer": "Continuer",
     "chargement": "Un instant…"
   },
@@ -202,6 +203,7 @@
   },
   "profil": {
     "retour": "Retour à la recherche",
+    "fermer": "Fermer",
     "telephoneVerifie": "Téléphone vérifié",
     "confirmee": "Compétence confirmée",
     "confirmeeDetail": "Confirmée par {sessions} sessions réalisées, notées {note} sur 5 en moyenne par les apprenants.",
@@ -267,6 +269,7 @@
       "DOMICILE": "Domicile"
     },
     "retour": "Retour",
+    "fermer": "Fermer",
     "competence": "Compétence à échanger"
   },
   "lieux": {
@@ -314,6 +317,7 @@
     "nonRealiseeMoi": "Cette session est notée comme non réalisée par ton absence.",
     "signaler": "Signaler {pseudo}",
     "retour": "Retour aux sessions",
+    "fermer": "Fermer",
     "aVenir": "La session a lieu {date}. Tu pourras la confirmer une fois l'heure passée.",
     "statutTitre": {
       "PROPOSEE": "Proposition",

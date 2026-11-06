@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Cloche } from "@/components/cloche";
 import { useEffect, useState, type ReactNode } from "react";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -15,5 +16,8 @@ export function Providers({ children }: { children: ReactNode }) {
     navigator.serviceWorker.addEventListener("message", surMessage);
     return () => navigator.serviceWorker.removeEventListener("message", surMessage);
   }, [client]);
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return <QueryClientProvider client={client}>
+      {children}
+      <Cloche />
+    </QueryClientProvider>;
 }

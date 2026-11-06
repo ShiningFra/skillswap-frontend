@@ -14,7 +14,7 @@ export function Ecran({ children, nav = false }: { children: ReactNode; nav?: bo
 export function Titre({ children, sousTitre }: { children: ReactNode; sousTitre?: ReactNode }) {
   return (
     <header className="flex flex-col gap-2">
-      <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight">{children}</h1>
+      <h1 className="pr-12 text-[1.75rem] font-extrabold leading-tight tracking-tight">{children}</h1>
       {sousTitre ? <p className="text-[0.95rem] leading-relaxed text-discret">{sousTitre}</p> : null}
     </header>
   );
