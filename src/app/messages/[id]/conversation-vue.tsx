@@ -47,16 +47,33 @@ export function ConversationVue({ id }: { id: string }) {
   // seulement si l'on est déjà en bas (ou si c'est soi qui écrit), pour ne pas arracher quelqu'un qui relit plus haut.
   useLayoutEffect(() => {
     const zone = defilement.current;
-    if (!zone || !conv.data || depart === undefined) return;
+    if (!zone || !conv.data || depart === undefined || !conv.isFetchedAfterMount) return;
     if (!initialise.current) {
       initialise.current = true;
       const cible = depart ? zone.querySelector<HTMLElement>(`[data-message="${depart}"]`) : null;
-      zone.scrollTop = cible ? Math.max(cible.offsetTop - 48, 0) : zone.scrollHeight;
+      // Les non-lus tiennent dans l'écran : on s'y place. Sinon (gros arriéré, conversation jamais ouverte) : tout en bas,
+      // la flèche et son compteur signalent le reste, plutôt que de renvoyer au tout début.
+      const tient = cible ? zone.scrollHeight - cible.offsetTop <= zone.clientHeight : false;
+      zone.scrollTop = cible && tient ? Math.max(cible.offsetTop - 48, 0) : zone.scrollHeight;
       return;
     }
     const pres = zone.scrollHeight - zone.scrollTop - zone.clientHeight < 140;
     if (pres || conv.data.messages.at(-1)?.deMoi) zone.scrollTo({ top: zone.scrollHeight, behavior: "smooth" });
-  }, [nbMessages, conv.data, depart]);
+  }, [nbMessages, conv.data, depart, conv.isFetchedAfterMount]);
+  // Bouton « aller en bas » : visible dès qu'on s'éloigne du dernier message, avec le nombre de messages reçus depuis.
+  const [loin, setLoin] = useState(false);
+  const [vus, setVus] = useState<number | null>(null);
+  const surDefilement = () => {
+    const zone = defilement.current;
+    if (!zone) return;
+    const ecart = zone.scrollHeight - zone.scrollTop - zone.clientHeight;
+    setLoin(ecart > 160);
+    if (ecart < 40) setVus(nbMessages);
+  };
+  const messagesListe = conv.data?.messages ?? [];
+  const base = vus ?? (depart ? Math.max(messagesListe.findIndex((m) => m.id === depart), 0) : nbMessages);
+  const nouveauxRecus = messagesListe.slice(base).filter((m) => !m.deMoi).length;
+  const versLeBas = () => defilement.current?.scrollTo({ top: defilement.current.scrollHeight, behavior: "smooth" });
 
   if (conv.error) {
     return (
@@ -84,7 +101,8 @@ export function ConversationVue({ id }: { id: string }) {
         </Link>
       </header>
 
-      <div ref={defilement} className="relative flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-4 py-3.5">
+      <div className="relative flex min-h-0 flex-1 flex-col">
+      <div ref={defilement} onScroll={surDefilement} className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-4 py-3.5">
         <div className="flex items-start gap-2.5 rounded-xl bg-avertissement-doux px-3 py-2.5 text-[0.78rem] leading-snug text-avertissement">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-px shrink-0">
             <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
@@ -102,6 +120,15 @@ export function ConversationVue({ id }: { id: string }) {
             </Fragment>
           ))}
         </ol>
+      </div>
+      {loin ? (
+        <button type="button" onClick={versLeBas} aria-label={t("versLeBas")} className="absolute bottom-3 right-4 flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-trait bg-surface text-encre shadow-md">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+          {nouveauxRecus > 0 ? <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-marque px-1 text-[0.6875rem] font-extrabold text-white">{nouveauxRecus}</span> : null}
+        </button>
+      ) : null}
       </div>
 
       <div className="flex shrink-0 flex-col gap-2.5 border-t-[1.5px] border-trait bg-surface px-4 pb-4 pt-2.5">

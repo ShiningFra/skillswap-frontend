@@ -224,6 +224,7 @@
     "titre": "Messages",
     "aucune": "Aucune conversation pour l'instant. Écris à un membre depuis son profil.",
     "nouveaux": "Messages non lus",
+    "versLeBas": "Aller aux derniers messages",
     "nonLus": "{count, plural, one {# message non lu} other {# messages non lus}}",
     "avec": "Conversation avec {pseudo}",
     "conseil": "Garde les échanges dans SkillSwap. Pour une première rencontre, choisis un lieu public.",
