@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Alerte, Bouton, Champ, Ecran, LienBouton, LienRetour, Titre } from "@/components/ui";
 import Link from "next/link";
@@ -18,7 +18,8 @@ import { propositionSchema, type PropositionValues } from "@/lib/schemas";
 export function SessionVue({ id }: { id: string }) {
   const t = useTranslations("session");
   const te = useTranslations();
-  const conv = useQuery({ queryKey: ["conversation", id], queryFn: () => lireConversation(id) });
+  // Les créneaux libres changent dès qu'une proposition est faite, refusée ou expirée : jamais de liste en cache.
+  const conv = useQuery({ queryKey: ["conversation", id], queryFn: () => lireConversation(id), staleTime: 0, refetchOnMount: "always", refetchOnWindowFocus: true });
   const form = useForm<PropositionValues>({
     resolver: zodResolver(propositionSchema),
     defaultValues: { creneauId: "", format: "PRESENTIEL", lieuType: "PUBLIC", contrepartie: "TROC" },
@@ -29,10 +30,23 @@ export function SessionVue({ id }: { id: string }) {
   const portefeuille = useQuery({ queryKey: ["portefeuille"], queryFn: obtenirPortefeuille, enabled: portefeuilleOk });
   const format = useWatch({ control: form.control, name: "format" });
   const lieu = useWatch({ control: form.control, name: "lieuType" });
-  const envoi = useMutation({ mutationFn: (v: PropositionValues) => proposerSession(id, v) });
+  const envoi = useMutation({
+    mutationFn: (v: PropositionValues) => proposerSession(id, v),
+    // Créneau pris entre-temps, ou autre refus : on recharge la liste pour ne proposer que des créneaux réellement libres.
+    onError: () => {
+      form.setValue("creneauId", "");
+      void conv.refetch();
+    },
+  });
+  // L'écran peut rester en mémoire quand on quitte la page : on repart d'un formulaire neuf à chaque retour.
+  const { reset: reinitEnvoi } = envoi;
+  const { reset: reinitForm } = form;
+  useEffect(() => () => { reinitEnvoi(); reinitForm(); }, [reinitEnvoi, reinitForm]);
   const e = form.formState.errors;
   const msg = (m?: string) => (m ? te(m) : undefined);
   const membre = conv.data?.membre;
+  // Un créneau « présentiel » ne peut pas servir à une session à distance, et inversement (RG : format du créneau).
+  const compatibles = (membre?.creneaux ?? []).filter((c) => c.format === "LES_DEUX" || c.format === format);
   const { libelle } = useCatalogue();
   const profil = useQuery({ queryKey: ["profil", membre?.id], queryFn: () => obtenirProfil(membre!.id), enabled: Boolean(membre?.id) });
   const contrepartie = useWatch({ control: form.control, name: "contrepartie" });
@@ -43,6 +57,8 @@ export function SessionVue({ id }: { id: string }) {
   // RG20 : en distance il n'y a pas de lieu, la valeur est retirée avant l'envoi.
   const changerFormat = (f: "PRESENTIEL" | "DISTANCE") => {
     form.setValue("format", f);
+    const choisi = membre?.creneaux.find((c) => c.id === creneauId);
+    if (choisi && choisi.format !== "LES_DEUX" && choisi.format !== f) form.setValue("creneauId", "");
     form.setValue("lieuType", f === "DISTANCE" ? undefined : "PUBLIC");
   };
 
@@ -90,14 +106,6 @@ export function SessionVue({ id }: { id: string }) {
             ))}
           </Groupe>
         ) : null}
-        <Groupe label={t("creneauDe", { prenom: membre ? prenom(membre.pseudo) : "" })} erreur={msg(e.creneauId?.message)} aide={membre?.creneaux.length === 0 ? t("aucuneCompatible") : undefined}>
-          {membre?.creneaux.map((c) => (
-            <Choix key={c.id} actif={creneauId === c.id} onClick={() => choisirCreneau(c.id)}>
-              {c.libelle}
-            </Choix>
-          ))}
-        </Groupe>
-
         <Groupe label={t("contrepartie")} erreur={msg(e.contrepartie?.message)} aide={t(`aide.${contrepartie}`)}>
           {CONTREPARTIES.filter((c) => c !== "ARGENT_PLATEFORME" || portefeuilleOk || contrepartie === c).map((c) => (
             <Choix key={c} actif={contrepartie === c} onClick={() => choisirContrepartie(c)}>
@@ -129,6 +137,14 @@ export function SessionVue({ id }: { id: string }) {
           {(["PRESENTIEL", "DISTANCE"] as const).filter((f) => f === "PRESENTIEL" || distanceOk || format === "DISTANCE").map((f) => (
             <Choix key={f} actif={format === f} onClick={() => changerFormat(f)}>
               {te(`formats.${f}`)}
+            </Choix>
+          ))}
+        </Groupe>
+
+        <Groupe label={t("creneauDe", { prenom: membre ? prenom(membre.pseudo) : "" })} erreur={msg(e.creneauId?.message)} aide={membre && compatibles.length === 0 ? t("aucuneCompatible") : undefined}>
+          {compatibles.map((c) => (
+            <Choix key={c.id} actif={creneauId === c.id} onClick={() => choisirCreneau(c.id)}>
+              {c.libelle}
             </Choix>
           ))}
         </Groupe>
