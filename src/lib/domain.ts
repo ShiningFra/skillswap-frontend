@@ -8,7 +8,7 @@ export const SENS_COMPETENCE = ["OFFERTE", "RECHERCHEE"] as const; // declaratio
 export const NIVEAUX = ["DEBUTANT", "INTERMEDIAIRE", "AVANCE"] as const; // declaration_competence.niveau
 export const FORMATS = ["PRESENTIEL", "DISTANCE", "LES_DEUX"] as const; // format (compétence, créneau, session)
 export const TYPES_LIEU = ["PUBLIC", "ESPACE_PARTAGE", "DOMICILE"] as const; // session_echange.lieu_type (RG20)
-export const CONTREPARTIES = ["TROC", "ARGENT_HORS_PLATEFORME", "GRATUIT"] as const; // session_echange.contrepartie (RG16)
+export const CONTREPARTIES = ["TROC", "ARGENT_HORS_PLATEFORME", "GRATUIT", "ARGENT_PLATEFORME"] as const; // session_echange.contrepartie (RG16)
 export const STATUTS_SESSION = [
   "PROPOSEE",
   "ACCEPTEE",
@@ -139,6 +139,11 @@ export interface SessionEchange {
   /** Lien de visioconférence d'une session à distance acceptée, saisi librement par l'un des deux membres. */
   lien?: string;
   contrepartie: Contrepartie;
+  /** Prix en FCFA d'une session payée sur la plateforme. */
+  prix?: number;
+  paiement?: "AUCUN" | "SEQUESTRE" | "LIBERE" | "REMBOURSE";
+  /** Vrai quand le membre connecté est celui qui paie (l'apprenant). */
+  jePaie?: boolean;
   statut: StatutSession;
   proposeParMoi: boolean;
   mesConfirmation: boolean;
@@ -149,7 +154,7 @@ export interface SessionEchange {
   avisDonne: boolean;
 }
 
-export type TypeNotification = "NOUVEAU_MESSAGE" | "NOUVELLE_SUGGESTION" | "SESSION_PROPOSEE" | "SESSION_ACCEPTEE" | "SESSION_REFUSEE" | "RAPPEL_AVIS" | "AVERTISSEMENT_ABSENCE" | "SUSPENSION" | "AVERTISSEMENT" | "LIEN_SESSION" | "NOUVEAU_SIGNALEMENT";
+export type TypeNotification = "NOUVEAU_MESSAGE" | "NOUVELLE_SUGGESTION" | "SESSION_PROPOSEE" | "SESSION_ACCEPTEE" | "SESSION_REFUSEE" | "RAPPEL_AVIS" | "AVERTISSEMENT_ABSENCE" | "SUSPENSION" | "AVERTISSEMENT" | "LIEN_SESSION" | "NOUVEAU_SIGNALEMENT" | "PAIEMENT_SEQUESTRE" | "PAIEMENT_RECU" | "PAIEMENT_REMBOURSE" | "RECHARGE_CONFIRMEE";
 
 export interface Notification {
   id: string;
@@ -199,6 +204,7 @@ export const CLES_PARAMETRES = [
   "recherche_semantique",
   "sessions_distance",
   "notifications_push",
+  "portefeuille",
 ] as const;
 export type CleParametre = (typeof CLES_PARAMETRES)[number];
 
@@ -208,4 +214,39 @@ export interface Parametre {
   /** Message affiché aux membres quand la fonctionnalité est en révision (optionnel). */
   message: string | null;
   modifieLe?: string;
+}
+
+/** Lot 1bis : montants en FCFA entiers (mêmes bornes que l'API). */
+export const PORTEFEUILLE = { rechargeMin: 500, rechargeMax: 100_000, retraitMin: 500, prixMin: 500, prixMax: 100_000, soldeMax: 500_000 } as const;
+export const OPERATEURS = ["MTN", "ORANGE"] as const;
+export type Operateur = (typeof OPERATEURS)[number];
+
+export interface Portefeuille {
+  disponible: number;
+  sequestre: number;
+  plafond: number;
+  prestataireSimule: boolean;
+}
+export type TypeEcriture = "RECHARGE" | "RETRAIT" | "RETRAIT_ANNULE" | "SEQUESTRE" | "LIBERATION" | "RECEPTION" | "REMBOURSEMENT";
+export interface EcriturePortefeuille {
+  id: string;
+  type: TypeEcriture;
+  deltaDisponible: number;
+  deltaSequestre: number;
+  sessionId?: string;
+  autre?: string;
+  date: string;
+}
+export interface RechargeOuverte {
+  reference: string;
+  urlPaiement: string;
+}
+export interface PortefeuilleAdmin {
+  disponible: number;
+  sequestre: number;
+  recharges: number;
+  retraits: number;
+  coherent: boolean;
+  blocageJours: number;
+  bloques: { id: string; prix: number; date: string; enseignant: string; apprenant: string }[];
 }

@@ -5,8 +5,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Alerte, Bouton, Ecran, LienBouton, LienRetour, Titre } from "@/components/ui";
-import { ApiError, lireConversation, obtenirProfil, proposerSession } from "@/lib/api";
+import { Alerte, Bouton, Champ, Ecran, LienBouton, LienRetour, Titre } from "@/components/ui";
+import Link from "next/link";
+import { ApiError, lireConversation, obtenirPortefeuille, obtenirProfil, proposerSession } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
 import { BandeauRevision } from "@/components/bandeau-revision";
 import { useParametres } from "@/lib/parametres";
@@ -22,7 +23,10 @@ export function SessionVue({ id }: { id: string }) {
     resolver: zodResolver(propositionSchema),
     defaultValues: { creneauId: "", format: "PRESENTIEL", lieuType: "PUBLIC", contrepartie: "TROC" },
   });
-  const distanceOk = useParametres().actif("sessions_distance");
+  const parametres = useParametres();
+  const distanceOk = parametres.actif("sessions_distance");
+  const portefeuilleOk = parametres.actif("portefeuille");
+  const portefeuille = useQuery({ queryKey: ["portefeuille"], queryFn: obtenirPortefeuille, enabled: portefeuilleOk });
   const format = useWatch({ control: form.control, name: "format" });
   const lieu = useWatch({ control: form.control, name: "lieuType" });
   const envoi = useMutation({ mutationFn: (v: PropositionValues) => proposerSession(id, v) });
@@ -54,7 +58,10 @@ export function SessionVue({ id }: { id: string }) {
 
   const opts = { shouldValidate: form.formState.isSubmitted, shouldDirty: true };
   const choisirCreneau = (v: string) => form.setValue("creneauId", v, opts);
-  const choisirContrepartie = (v: PropositionValues["contrepartie"]) => form.setValue("contrepartie", v, opts);
+  const choisirContrepartie = (v: PropositionValues["contrepartie"]) => {
+    form.setValue("contrepartie", v, opts);
+    if (v !== "ARGENT_PLATEFORME") form.setValue("prix", undefined, opts);
+  };
   const choisirLieu = (v: NonNullable<PropositionValues["lieuType"]>) => form.setValue("lieuType", v, opts);
   const offres = profil.data?.offertes ?? [];
   const plusieurs = offres.length > 1;
@@ -92,12 +99,31 @@ export function SessionVue({ id }: { id: string }) {
         </Groupe>
 
         <Groupe label={t("contrepartie")} erreur={msg(e.contrepartie?.message)} aide={t(`aide.${contrepartie}`)}>
-          {CONTREPARTIES.map((c) => (
+          {CONTREPARTIES.filter((c) => c !== "ARGENT_PLATEFORME" || portefeuilleOk || contrepartie === c).map((c) => (
             <Choix key={c} actif={contrepartie === c} onClick={() => choisirContrepartie(c)}>
               {t(`contrepartieCourt.${c}`)}
             </Choix>
           ))}
         </Groupe>
+
+        {contrepartie === "ARGENT_PLATEFORME" ? (
+          <div className="flex flex-col gap-2">
+            <Champ
+              id="prix"
+              label={t("prix")}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="2000"
+              erreur={msg(e.prix?.message)}
+              aide={t("prixAide", { solde: portefeuille.data ? portefeuille.data.disponible.toLocaleString("fr-FR") : "…" })}
+              {...form.register("prix", { setValueAs: (v) => (v === "" || v == null ? undefined : Number(String(v).replace(/\s/g, ""))) })}
+            />
+            {!portefeuilleOk ? <BandeauRevision cle="portefeuille" /> : null}
+            <Link href="/portefeuille" className="min-h-11 self-start py-2 text-sm font-bold text-marque">
+              {t("recharger")}
+            </Link>
+          </div>
+        ) : null}
 
         <Groupe label={t("format")}>
           {(["PRESENTIEL", "DISTANCE"] as const).filter((f) => f === "PRESENTIEL" || distanceOk || format === "DISTANCE").map((f) => (

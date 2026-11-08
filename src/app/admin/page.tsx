@@ -63,6 +63,9 @@ export default function PageAdmin() {
         <Link href="/admin/parametres" className="flex min-h-11 items-center rounded-xl border-[1.5px] border-trait bg-surface px-4 text-sm font-bold">
           {t("gererParametres")}
         </Link>
+        <Link href="/admin/portefeuille" className="flex min-h-11 items-center rounded-xl border-[1.5px] border-trait bg-surface px-4 text-sm font-bold">
+          {t("gererPortefeuille")}
+        </Link>
         <Link href="/accueil" className="flex min-h-11 items-center rounded-xl border-[1.5px] border-trait bg-surface px-4 text-sm font-bold">
           {t("voirApp")}
         </Link>

@@ -7,7 +7,7 @@
  * Les erreurs portent une clé de traduction (section « errors » de messages/fr.json).
  */
 import { CLES_PARAMETRES, CONFIRMATION } from "./domain";
-import type { CleParametre, Parametre } from "./domain";
+import type { CleParametre, EcriturePortefeuille, Operateur, Parametre, Portefeuille, PortefeuilleAdmin, RechargeOuverte } from "./domain";
 import type {
   DecisionModeration,
   IndicateursAdmin,
@@ -645,6 +645,7 @@ export async function proposerSession(
   const p = c && PROFILS.find((x) => x.id === c.membreId);
   const creneau = p?.creneaux.find((cr) => cr.id === valeurs.creneauId);
   if (!p || !creneau) throw new ApiError("errors.creneau");
+  if (valeurs.prix && valeurs.prix > PORTEFEUILLE_SIMULE.disponible) throw new ApiError("errors.soldeInsuffisant");
   const id = `s-nouv-${++compteurSessions}`;
   sessions.push({
     id,
@@ -654,6 +655,9 @@ export async function proposerSession(
     format: valeurs.format,
     lieuType: valeurs.lieuType,
     contrepartie: valeurs.contrepartie,
+    prix: valeurs.prix,
+    paiement: valeurs.prix ? "AUCUN" : undefined,
+    jePaie: valeurs.prix ? true : undefined,
     statut: "PROPOSEE",
     proposeParMoi: true,
     mesConfirmation: false,
@@ -1148,4 +1152,75 @@ export async function modifierParametre(cle: CleParametre, v: { actif: boolean; 
   p.actif = v.actif;
   p.message = v.message;
   p.modifieLe = new Date().toISOString();
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Lot 1bis : portefeuille (solde reflété, séquestre, recharge et retrait via le prestataire agréé)
+// ---------------------------------------------------------------------------------------------------------------
+
+const PORTEFEUILLE_SIMULE = { disponible: 0, sequestre: 0 };
+const ECRITURES_SIMULEES: EcriturePortefeuille[] = [];
+const RECHARGES_SIMULEES = new Map<string, { montant: number; statut: "EN_ATTENTE" | "REUSSIE" | "ECHOUEE" }>();
+
+export async function obtenirPortefeuille(): Promise<Portefeuille> {
+  if (MODE_REEL) return appel("GET", "/portefeuille");
+  await pause(100);
+  return { ...PORTEFEUILLE_SIMULE, plafond: 500_000, prestataireSimule: true };
+}
+
+export async function historiquePortefeuille(decalage: number, limite = 15): Promise<{ ecritures: EcriturePortefeuille[]; suite: boolean }> {
+  if (MODE_REEL) return appel("GET", `/portefeuille/historique?limite=${limite}&decalage=${decalage}`);
+  await pause(100);
+  const page = ECRITURES_SIMULEES.slice(decalage, decalage + limite);
+  return { ecritures: page, suite: ECRITURES_SIMULEES.length > decalage + limite };
+}
+
+export async function ouvrirRecharge(v: { montant: number; operateur: Operateur; numero: string }): Promise<RechargeOuverte> {
+  if (MODE_REEL) return appel("POST", "/portefeuille/recharges", v);
+  await pause();
+  const reference = `SIM-R-${Date.now()}`;
+  RECHARGES_SIMULEES.set(reference, { montant: v.montant, statut: "EN_ATTENTE" });
+  return { reference, urlPaiement: `/portefeuille/paiement?reference=${reference}` };
+}
+
+export async function lireRecharge(reference: string): Promise<{ montant: number; statut: "EN_ATTENTE" | "REUSSIE" | "ECHOUEE"; operateur: Operateur }> {
+  if (MODE_REEL) return appel("GET", `/portefeuille/recharges/${encodeURIComponent(reference)}`);
+  const r = RECHARGES_SIMULEES.get(reference);
+  if (!r) throw new ApiError("errors.introuvable");
+  return { ...r, operateur: "MTN" };
+}
+
+/** Simule la réponse du prestataire (page de paiement hébergée par le faux prestataire). */
+export async function simulerRecharge(reference: string, issue: "REUSSIE" | "ECHOUEE"): Promise<void> {
+  if (MODE_REEL) return appel("POST", `/portefeuille/recharges/${encodeURIComponent(reference)}/simulation`, { issue });
+  await pause();
+  const r = RECHARGES_SIMULEES.get(reference);
+  if (!r || r.statut !== "EN_ATTENTE") return;
+  r.statut = issue;
+  if (issue === "REUSSIE") {
+    PORTEFEUILLE_SIMULE.disponible += r.montant;
+    ECRITURES_SIMULEES.unshift({ id: `e${ECRITURES_SIMULEES.length + 1}`, type: "RECHARGE", deltaDisponible: r.montant, deltaSequestre: 0, date: new Date().toISOString() });
+  }
+}
+
+export async function retirerPortefeuille(v: { montant: number; operateur: Operateur; numero: string; motDePasse: string }): Promise<void> {
+  if (MODE_REEL) return appel("POST", "/portefeuille/retraits", v);
+  await pause();
+  if (!v.motDePasse) throw new ApiError("errors.identifiants");
+  if (v.montant > PORTEFEUILLE_SIMULE.disponible) throw new ApiError("errors.soldeInsuffisant");
+  PORTEFEUILLE_SIMULE.disponible -= v.montant;
+  ECRITURES_SIMULEES.unshift({ id: `e${ECRITURES_SIMULEES.length + 1}`, type: "RETRAIT", deltaDisponible: -v.montant, deltaSequestre: 0, date: new Date().toISOString() });
+}
+
+export async function obtenirPortefeuilleAdmin(): Promise<PortefeuilleAdmin> {
+  if (MODE_REEL) return appel("GET", "/admin/portefeuille");
+  await pause(100);
+  return { disponible: PORTEFEUILLE_SIMULE.disponible, sequestre: PORTEFEUILLE_SIMULE.sequestre, recharges: PORTEFEUILLE_SIMULE.disponible, retraits: 0, coherent: true, blocageJours: 7, bloques: [] };
+}
+
+/** Arbitre un paiement resté en séquestre : versé à l'enseignant ou rendu à l'apprenant. */
+export async function trancherPaiement(sessionId: string, issue: "LIBERER" | "REMBOURSER", motDePasse: string): Promise<void> {
+  if (MODE_REEL) return appel("POST", `/admin/sessions/${sessionId}/paiement`, { issue, motDePasse });
+  await pause();
+  if (!motDePasse) throw new ApiError("errors.identifiants");
 }

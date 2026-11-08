@@ -72,7 +72,16 @@
     "creneauPasse": "Choisis un créneau dans le futur.",
     "creneauReserve": "Ce créneau est réservé par une session. Traite d'abord la session.",
     "telephoneIdentique": "C'est déjà ton numéro vérifié.",
-    "jetonInvalide": "Ce lien n'est plus valable (expiré ou déjà utilisé)."
+    "jetonInvalide": "Ce lien n'est plus valable (expiré ou déjà utilisé).",
+    "soldeInsuffisant": "Ton solde disponible ne couvre pas ce montant. Recharge ton portefeuille.",
+    "soldeApprenant": "Le solde de l'apprenant ne couvre pas le prix pour l'instant. Réessaie plus tard ou propose-lui de recharger.",
+    "plafondSolde": "Cette recharge dépasserait le plafond du portefeuille (500 000 FCFA pendant la phase de test).",
+    "rechargeEnCours": "Une recharge est déjà en cours. Termine-la ou attends 30 minutes.",
+    "retraitEchoue": "Le retrait n'a pas abouti auprès de l'opérateur. Ton solde est intact.",
+    "soldeNonVide": "Ton portefeuille n'est pas vide. Retire ton solde avant de supprimer ton compte.",
+    "prix": "Indique un prix entre 500 et 100 000 FCFA.",
+    "montant": "Indique un montant entier en FCFA, dans les limites autorisées.",
+    "numero": "Numéro Mobile Money invalide : 9 chiffres commençant par 6."
   },
   "inscription": {
     "accroche": "J'apprends ce que tu sais. Tu apprends ce que je sais.",
@@ -176,7 +185,8 @@
     "profil": "Profil",
     "competences": "Compétences",
     "principale": "Navigation principale",
-    "sessions": "Sessions"
+    "sessions": "Sessions",
+    "portefeuille": "Portefeuille"
   },
   "recherche": {
     "titre": "Rechercher",
@@ -273,12 +283,14 @@
     "contrepartieCourt": {
       "TROC": "Troc",
       "ARGENT_HORS_PLATEFORME": "Argent",
-      "GRATUIT": "Gratuit"
+      "GRATUIT": "Gratuit",
+      "ARGENT_PLATEFORME": "Payer ici"
     },
     "aide": {
       "TROC": "Tu lui enseignes quelque chose en retour : chacun apprend.",
       "ARGENT_HORS_PLATEFORME": "Le paiement se règle entre vous, en dehors de SkillSwap.",
-      "GRATUIT": "Un coup de main sans contrepartie."
+      "GRATUIT": "Un coup de main sans contrepartie.",
+      "ARGENT_PLATEFORME": "Le prix est mis en réserve quand l'enseignant accepte, puis versé après la session. Rendu si elle n'a pas lieu."
     },
     "lieuCourt": {
       "PUBLIC": "Lieu public",
@@ -287,7 +299,10 @@
     },
     "retour": "Retour",
     "fermer": "Fermer",
-    "competence": "Compétence à échanger"
+    "competence": "Compétence à échanger",
+    "prix": "Prix (FCFA)",
+    "prixAide": "Entre 500 et 100 000 FCFA. Ton solde disponible : {solde} FCFA.",
+    "recharger": "Recharger mon portefeuille"
   },
   "lieux": {
     "PUBLIC": "Lieu public",
@@ -297,7 +312,8 @@
   "contreparties": {
     "TROC": "Troc",
     "ARGENT_HORS_PLATEFORME": "Argent, hors plateforme",
-    "GRATUIT": "Gratuit"
+    "GRATUIT": "Gratuit",
+    "ARGENT_PLATEFORME": "Paiement sur SkillSwap"
   },
   "statuts": {
     "PROPOSEE": "Proposée",
@@ -352,7 +368,17 @@
     },
     "retourProfil": "Retour",
     "nonRealiseeTitre": "Absence déclarée",
-    "tuAsConfirmeTitre": "Tu as confirmé"
+    "tuAsConfirmeTitre": "Tu as confirmé",
+    "prix": "Prix",
+    "paiementSEQUESTRE_paie": "Ton paiement est en réserve. Il sera versé à {pseudo} quand vous aurez tous deux confirmé la session.",
+    "paiementSEQUESTRE_recoit": "{prix} FCFA sont en réserve. Ils te seront versés quand vous aurez tous deux confirmé la session.",
+    "paiementLIBERE_paie": "Le paiement a été versé à {pseudo}.",
+    "paiementLIBERE_recoit": "Le paiement t'a été versé.",
+    "paiementREMBOURSE_paie": "Le prix t'a été rendu.",
+    "paiementREMBOURSE_recoit": "Le paiement a été rendu à {pseudo}.",
+    "paiementAUCUN_paie": "Le prix sera mis en réserve dès que {pseudo} aura accepté.",
+    "paiementAUCUN_recoit": "{pseudo} paiera {prix} FCFA : le montant sera mis en réserve quand tu accepteras.",
+    "fcfa": "{montant} FCFA"
   },
   "avis": {
     "titre": "Comment s'est passée la session ?",
@@ -446,7 +472,11 @@
       "SUSPENSION": "Compte suspendu",
       "AVERTISSEMENT": "Avertissement",
       "LIEN_SESSION": "Lien de la session à distance",
-      "NOUVEAU_SIGNALEMENT": "Nouveau signalement"
+      "NOUVEAU_SIGNALEMENT": "Nouveau signalement",
+      "PAIEMENT_SEQUESTRE": "Prix mis en réserve",
+      "PAIEMENT_RECU": "Paiement reçu",
+      "PAIEMENT_REMBOURSE": "Prix remboursé",
+      "RECHARGE_CONFIRMEE": "Portefeuille rechargé"
     },
     "nonLue": "non lue",
     "maintenant": "À l'instant",
@@ -460,7 +490,8 @@
       "propositions_competences": "Ajout de nouvelles compétences",
       "recherche_semantique": "Recherche par le sens",
       "sessions_distance": "Sessions à distance",
-      "notifications_push": "Notifications sur l'appareil"
+      "notifications_push": "Notifications sur l'appareil",
+      "portefeuille": "Portefeuille et paiements"
     },
     "defaut": {
       "verification_telephone": "La vérification du numéro de téléphone est suspendue pour le moment. Tu peux continuer sans, elle te sera demandée plus tard si besoin.",
@@ -468,7 +499,8 @@
       "propositions_competences": "L'ajout de nouvelles compétences est suspendu pour le moment. Choisis-en une dans la liste.",
       "recherche_semantique": "La recherche par le sens est suspendue ; la recherche classique reste disponible.",
       "sessions_distance": "Les sessions à distance sont suspendues pour le moment. Propose une session en présentiel.",
-      "notifications_push": "Les notifications sur l'appareil sont suspendues pour le moment."
+      "notifications_push": "Les notifications sur l'appareil sont suspendues pour le moment.",
+      "portefeuille": "Le portefeuille est en révision : recharges, retraits et nouvelles sessions payantes sont suspendus. Tes sessions déjà payées se terminent normalement."
     },
     "titre": "Paramètres et fonctionnalités",
     "intro": "Mets une fonctionnalité en révision : elle est refusée par le serveur et les membres voient un bandeau « en révision » en quelques secondes. Chaque changement demande ton mot de passe et est inscrit au journal d'audit.",
@@ -478,7 +510,8 @@
       "propositions_competences": "Possibilité pour les membres d'ajouter une compétence absente du catalogue.",
       "recherche_semantique": "Suggestions par le sens (« faire des gâteaux » → Pâtisserie). La recherche classique reste active.",
       "sessions_distance": "Proposition de sessions en visioconférence.",
-      "notifications_push": "Envoi de notifications sur l'appareil des membres."
+      "notifications_push": "Envoi de notifications sur l'appareil des membres.",
+      "portefeuille": "Recharge, retrait et sessions payantes sur la plateforme. Les paiements déjà en séquestre se libèrent quand même."
     },
     "actif": "Actif",
     "enRevisionEtat": "En révision",
@@ -547,6 +580,26 @@
       "HAUTE": "Urgent",
       "MOYENNE": "Normal",
       "BASSE": "Faible"
+    },
+    "gererPortefeuille": "Portefeuille et paiements",
+    "portefeuille": {
+      "titre": "Portefeuille et paiements",
+      "intro": "Encours des soldes, contrôle du grand livre et paiements restés en réserve.",
+      "disponible": "Soldes disponibles",
+      "reserve": "En séquestre",
+      "recharges": "Recharges réussies",
+      "retraits": "Retraits réussis",
+      "coherent": "Grand livre cohérent : la somme des soldes égale les recharges moins les retraits.",
+      "incoherent": "Écart détecté entre les soldes, le grand livre et les opérations du prestataire. À investiguer avant toute autre action.",
+      "bloques": "Paiements bloqués",
+      "bloquesAide": "Sessions acceptées dont la date a plus de {jours} jours et dont le prix est toujours en réserve.",
+      "aucunBloque": "Aucun paiement bloqué.",
+      "liberer": "Verser à l'enseignant",
+      "rembourser": "Rendre à l'apprenant",
+      "motDePasse": "Ton mot de passe",
+      "confirmer": "Confirmer",
+      "fait": "Décision enregistrée.",
+      "ligne": "{apprenant} → {enseignant} · {prix} FCFA"
     }
   },
   "compte": {
@@ -602,7 +655,9 @@
     "menuMdpDetail": "Changer ton mot de passe",
     "menuCreneauxDetail": "Tes créneaux publiés",
     "profilIntro": "Ces informations sont visibles par les autres membres.",
-    "mdpIntro": "Tes autres appareils seront déconnectés après le changement."
+    "mdpIntro": "Tes autres appareils seront déconnectés après le changement.",
+    "menuPortefeuille": "Portefeuille",
+    "menuPortefeuilleDetail": "Solde, recharge, retrait et historique"
   },
   "creneaux": {
     "titre": "Mes disponibilités",
@@ -640,5 +695,53 @@
     "lienInvalide": "Lien incomplet",
     "lienInvalideTexte": "Ce lien ne contient pas de code. Redemande un nouveau lien.",
     "redemander": "Demander un nouveau lien"
+  },
+  "portefeuille": {
+    "titre": "Portefeuille",
+    "disponible": "Disponible",
+    "enReserve": "En réserve",
+    "enReserveAide": "Prix de tes sessions payées, versés après la session.",
+    "plafondAide": "Plafond pendant la phase de test : {plafond} FCFA.",
+    "recharger": "Recharger",
+    "retirer": "Retirer",
+    "annuler": "Annuler",
+    "montant": "Montant (FCFA)",
+    "operateur": "Opérateur",
+    "numero": "Numéro Mobile Money",
+    "numeroAide": "9 chiffres, par exemple 677 12 34 56. Il n'est pas conservé en entier.",
+    "motDePasse": "Ton mot de passe",
+    "MTN": "MTN Mobile Money",
+    "ORANGE": "Orange Money",
+    "continuerPaiement": "Continuer vers le paiement",
+    "confirmerRetrait": "Retirer vers mon compte",
+    "retraitOk": "Retrait effectué.",
+    "info": "SkillSwap ne garde pas ton argent : les recharges et retraits passent par un prestataire de paiement agréé. Le solde affiché reflète tes opérations.",
+    "historique": "Historique",
+    "aucuneEcriture": "Aucune opération pour l'instant.",
+    "voirPlus": "Voir plus",
+    "types": {
+      "RECHARGE": "Recharge",
+      "RETRAIT": "Retrait",
+      "RETRAIT_ANNULE": "Retrait annulé",
+      "SEQUESTRE": "Mis en réserve",
+      "LIBERATION": "Paiement versé",
+      "RECEPTION": "Paiement reçu",
+      "REMBOURSEMENT": "Remboursement"
+    },
+    "avec": "avec {pseudo}",
+    "voirSession": "Voir la session",
+    "paiement": {
+      "titre": "Paiement",
+      "simule": "Page de paiement simulée",
+      "simuleAide": "Ceci remplace la page de l'opérateur pendant le développement. Aucun argent réel n'est débité.",
+      "montant": "Montant à payer : {montant} FCFA",
+      "payer": "Payer",
+      "echouer": "Simuler un échec",
+      "reussi": "Paiement confirmé. Ton portefeuille est rechargé.",
+      "echoue": "Le paiement n'a pas abouti. Rien n'a été débité.",
+      "attente": "Paiement en attente de confirmation…",
+      "retour": "Retour au portefeuille",
+      "pasSimule": "Cette page n'est disponible qu'avec le prestataire de test."
+    }
   }
 }

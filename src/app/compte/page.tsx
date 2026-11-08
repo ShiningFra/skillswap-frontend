@@ -104,6 +104,11 @@ export default function PageCompte() {
           detail={t("menuMdpDetail")}
         />
         <Option
+          href="/portefeuille"
+          titre={t("menuPortefeuille")}
+          detail={t("menuPortefeuilleDetail")}
+        />
+        <Option
           href="/compte/notifications"
           titre={t("menuNotifs")}
           detail={t("menuNotifsDetail")}

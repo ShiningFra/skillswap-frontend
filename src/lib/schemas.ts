@@ -7,6 +7,8 @@ import {
   NIVEAUX,
   SENS_COMPETENCE,
   TYPES_LIEU,
+  OPERATEURS,
+  PORTEFEUILLE,
 } from "./domain";
 
 /**
@@ -114,8 +116,17 @@ export const propositionSchema = z
     format: z.enum(["PRESENTIEL", "DISTANCE"]),
     lieuType: z.enum(TYPES_LIEU).optional(),
     contrepartie: z.enum(CONTREPARTIES, { error: "errors.contrepartie" }),
+    /** FCFA entiers, exigé (et seulement alors) pour une session payée sur la plateforme. */
+    prix: z
+      .number({ error: "errors.prix" })
+      .int({ error: "errors.prix" })
+      .min(PORTEFEUILLE.prixMin, { error: "errors.prix" })
+      .max(PORTEFEUILLE.prixMax, { error: "errors.prix" })
+      .optional(),
   })
   .superRefine((v, ctx) => {
+    if ((v.contrepartie === "ARGENT_PLATEFORME") !== (v.prix !== undefined))
+      ctx.addIssue({ code: "custom", path: ["prix"], message: "errors.prix" });
     if (v.format === "PRESENTIEL" && !v.lieuType)
       ctx.addIssue({
         code: "custom",
@@ -227,3 +238,27 @@ export const reinitialisationSchema = z
     path: ["confirmation"],
   });
 export type ReinitialisationValues = z.infer<typeof reinitialisationSchema>;
+
+const montant = (min: number, max: number) =>
+  z.number({ error: "errors.montant" }).int({ error: "errors.montant" }).min(min, { error: "errors.montant" }).max(max, { error: "errors.montant" });
+/** Numéro Mobile Money camerounais : 9 chiffres commençant par 6, avec ou sans +237. */
+const numero = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/[\s.-]/g, "").replace(/^(\+|00)?237/, ""))
+  .pipe(z.string().regex(/^6\d{8}$/, { error: "errors.numero" }));
+
+export const rechargeSchema = z.object({
+  montant: montant(PORTEFEUILLE.rechargeMin, PORTEFEUILLE.rechargeMax),
+  operateur: z.enum(OPERATEURS, { error: "errors.invalide" }),
+  numero,
+});
+export type RechargeValues = z.input<typeof rechargeSchema>;
+export type RechargeSortie = z.output<typeof rechargeSchema>;
+
+export const retraitSchema = rechargeSchema.extend({
+  montant: montant(PORTEFEUILLE.retraitMin, PORTEFEUILLE.soldeMax),
+  motDePasse: z.string().min(1, { error: "errors.invalide" }),
+});
+export type RetraitValues = z.input<typeof retraitSchema>;
+export type RetraitSortie = z.output<typeof retraitSchema>;

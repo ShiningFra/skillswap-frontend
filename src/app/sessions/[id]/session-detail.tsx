@@ -63,7 +63,17 @@ export function SessionDetail({ id }: { id: string }) {
         {ligne(t("format"), te(`formats.${s.format}`))}
         {s.lieuType ? ligne(t("lieu"), te(`lieux.${s.lieuType}`)) : null}
         {ligne(t("contrepartie"), te(`contreparties.${s.contrepartie}`))}
+        {s.prix ? ligne(t("prix"), t("fcfa", { montant: s.prix.toLocaleString("fr-FR") })) : null}
       </dl>
+
+      {s.prix && s.paiement && !(s.statut === "PROPOSEE" || s.statut === "REFUSEE" || s.statut === "EXPIREE") ? (
+        <Alerte ton={s.paiement === "SEQUESTRE" ? "avertissement" : "info"}>
+          {t(`paiement${s.paiement}_${s.jePaie ? "paie" : "recoit"}`, { pseudo, prix: s.prix.toLocaleString("fr-FR") })}
+        </Alerte>
+      ) : null}
+      {s.prix && s.statut === "PROPOSEE" ? (
+        <Alerte>{t(`paiementAUCUN_${s.jePaie ? "paie" : "recoit"}`, { pseudo, prix: s.prix.toLocaleString("fr-FR") })}</Alerte>
+      ) : null}
 
       {s.statut === "PROPOSEE" && s.proposeParMoi ? <Alerte>{t("enAttente", { pseudo })}</Alerte> : null}
 
