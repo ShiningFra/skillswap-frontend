@@ -21,6 +21,8 @@ import {
   demanderCodeSms,
   verifierCodeSms,
 } from "@/lib/api";
+import { BandeauRevision } from "@/components/bandeau-revision";
+import { useParametres } from "@/lib/parametres";
 import { telephoneSchema, type TelephoneValues } from "@/lib/schemas";
 
 /** « +237 6 •• •• 42 17 » : le numéro n'est jamais réaffiché en entier. */
@@ -61,6 +63,7 @@ export function VerificationTelephone({
 }) {
   const t = useTranslations();
   const router = useRouter();
+  const enRevision = !useParametres().actif("verification_telephone");
   const qc = useQueryClient();
   const [telephone, setTelephone] = useState<string | null>(null);
   const [chiffres, setChiffres] = useState<string[]>(["", "", "", "", "", ""]);
@@ -127,6 +130,7 @@ export function VerificationTelephone({
         {entete(
           changer ? t("verification.introChanger") : t("verification.intro"),
         )}
+        <BandeauRevision cle="verification_telephone" />
         <form
           noValidate
           className="flex flex-1 flex-col gap-4"
@@ -155,17 +159,17 @@ export function VerificationTelephone({
             </Alerte>
           ) : null}
           <div className="mt-auto flex flex-col gap-2.5">
-            <Bouton type="submit" disabled={envoyer.isPending}>
+            <Bouton type="submit" disabled={envoyer.isPending || enRevision}>
               {envoyer.isPending
                 ? t("common.chargement")
                 : t("verification.envoyerCode")}
             </Bouton>
-            {!changer ? (
+            {!changer || enRevision ? (
               <a
                 href={suite}
                 className="flex min-h-12 items-center justify-center text-[0.9375rem] font-bold text-marque"
               >
-                {t("verification.plusTard")}
+                {enRevision ? t("verification.continuerSans") : t("verification.plusTard")}
               </a>
             ) : null}
           </div>

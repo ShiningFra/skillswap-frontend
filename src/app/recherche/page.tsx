@@ -9,6 +9,8 @@ import { rechercherProfils } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
 import type { Format, ProfilMembre } from "@/lib/domain";
 import { normaliser } from "@/lib/format";
+import { classer, fusionner } from "@/lib/recherche-floue";
+import { useProchesDuSens } from "@/lib/semantique";
 
 const FORMATS_FILTRE: (Format | "")[] = ["", "PRESENTIEL", "DISTANCE"];
 
@@ -19,8 +21,10 @@ export default function PageRecherche() {
   const [terme, setTerme] = useState("");
   const [format, setFormat] = useState<Format | "">("");
   const mot = normaliser(terme);
-  // Le champ filtre sur le nom de la compétence : toutes celles qui contiennent le texte tapé sont cherchées.
-  const ids = mot ? liste.filter((c) => normaliser(c.libelle).includes(mot)).slice(0, 5).map((c) => c.id) : [];
+  // Les compétences les plus proches du texte (synonymes, fautes de frappe, catégorie) sont toutes cherchées.
+  const sens = useProchesDuSens(terme);
+  const proches = mot ? fusionner(classer(terme, liste, 8), sens, liste, 8) : [];
+  const ids = proches.filter((r) => r.score >= proches[0].score - 45).slice(0, 6).map((r) => r.competence.id);
   const { data, isPending } = useQuery({
     queryKey: ["recherche", mot, ids.join(","), format],
     enabled: !mot || liste.length > 0,
@@ -45,6 +49,20 @@ export default function PageRecherche() {
         </svg>
         <input type="search" aria-label={t("champ")} placeholder={t("placeholder")} value={terme} onChange={(e) => setTerme(e.target.value)} className="min-w-0 flex-1 border-0 bg-transparent py-3 text-base outline-none" />
       </div>
+
+      {proches.length > 1 || (proches.length === 1 && normaliser(proches[0].competence.libelle) !== mot) ? (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[0.8125rem] font-semibold text-discret">{t("proches")}</p>
+          <div className="flex flex-wrap gap-2">
+            {proches.map((r) => (
+              <button key={r.competence.id} type="button" onClick={() => setTerme(r.competence.libelle)} className="min-h-11 rounded-full border-[1.5px] border-bord bg-surface px-4 text-sm font-semibold text-[#33403a]">
+                {r.competence.libelle}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {mot && liste.length > 0 && proches.length === 0 ? <p className="text-sm text-discret">{t("aucuneProche", { terme: terme.trim() })}</p> : null}
 
       <div role="group" aria-label={t("formatGroupe")} className="flex gap-2 overflow-x-auto">
         {FORMATS_FILTRE.map((f) => (

@@ -7,6 +7,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "SkillSwap", template: "%s · SkillSwap" },
   description: "Échange des compétences avec des personnes près de chez toi ou à distance.",
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

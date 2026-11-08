@@ -7,17 +7,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Alerte, Bouton, CaseACocher, Champ, Ecran, Logo, Titre } from "@/components/ui";
+import { BandeauRevision } from "@/components/bandeau-revision";
 import { ApiError, inscrire } from "@/lib/api";
+import { useParametres } from "@/lib/parametres";
 import { inscriptionSchema, type InscriptionValues } from "@/lib/schemas";
 
 export default function PageInscription() {
   const t = useTranslations();
   const router = useRouter();
+  const parametres = useParametres();
   const { register, handleSubmit, formState } = useForm<InscriptionValues>({
     resolver: zodResolver(inscriptionSchema),
     mode: "onTouched",
   });
-  const envoi = useMutation({ mutationFn: inscrire, onSuccess: () => router.push("/verification") });
+  const envoi = useMutation({ mutationFn: inscrire, onSuccess: () => router.push(parametres.actif("verification_telephone") ? "/verification" : "/localisation") });
   const e = formState.errors;
   const msg = (m?: string) => (m ? t(m) : undefined);
 
@@ -27,6 +30,7 @@ export default function PageInscription() {
         <Logo />
       </div>
       <Titre sousTitre={t("inscription.sousTitre")}>{t("inscription.accroche")}</Titre>
+      <BandeauRevision cle="inscriptions" />
       <form noValidate onSubmit={handleSubmit((v) => envoi.mutate(v))} className="flex flex-col gap-4">
         <Champ id="email" type="email" autoComplete="email" inputMode="email" label={t("inscription.email")} erreur={msg(e.email?.message)} {...register("email")} />
         <Champ id="pseudo" autoComplete="nickname" label={t("inscription.pseudo")} erreur={msg(e.pseudo?.message)} {...register("pseudo")} />
@@ -38,7 +42,7 @@ export default function PageInscription() {
           {t("inscription.cgu")}
         </CaseACocher>
         {envoi.error ? <Alerte ton="danger">{t(envoi.error instanceof ApiError ? envoi.error.cle : "errors.generique")}</Alerte> : null}
-        <Bouton type="submit" disabled={envoi.isPending}>
+        <Bouton type="submit" disabled={envoi.isPending || !parametres.actif("inscriptions")}>
           {envoi.isPending ? t("common.chargement") : t("inscription.creer")}
         </Bouton>
       </form>

@@ -8,6 +8,8 @@ import { useForm, useWatch } from "react-hook-form";
 import { Alerte, Bouton, Ecran, LienBouton, LienRetour, Titre } from "@/components/ui";
 import { ApiError, lireConversation, obtenirProfil, proposerSession } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
+import { BandeauRevision } from "@/components/bandeau-revision";
+import { useParametres } from "@/lib/parametres";
 import { CONTREPARTIES, TYPES_LIEU } from "@/lib/domain";
 import { prenom } from "@/lib/format";
 import { propositionSchema, type PropositionValues } from "@/lib/schemas";
@@ -20,6 +22,7 @@ export function SessionVue({ id }: { id: string }) {
     resolver: zodResolver(propositionSchema),
     defaultValues: { creneauId: "", format: "PRESENTIEL", lieuType: "PUBLIC", contrepartie: "TROC" },
   });
+  const distanceOk = useParametres().actif("sessions_distance");
   const format = useWatch({ control: form.control, name: "format" });
   const lieu = useWatch({ control: form.control, name: "lieuType" });
   const envoi = useMutation({ mutationFn: (v: PropositionValues) => proposerSession(id, v) });
@@ -97,12 +100,14 @@ export function SessionVue({ id }: { id: string }) {
         </Groupe>
 
         <Groupe label={t("format")}>
-          {(["PRESENTIEL", "DISTANCE"] as const).map((f) => (
+          {(["PRESENTIEL", "DISTANCE"] as const).filter((f) => f === "PRESENTIEL" || distanceOk || format === "DISTANCE").map((f) => (
             <Choix key={f} actif={format === f} onClick={() => changerFormat(f)}>
               {te(`formats.${f}`)}
             </Choix>
           ))}
         </Groupe>
+
+        {!distanceOk ? <BandeauRevision cle="sessions_distance" /> : null}
 
         {format === "PRESENTIEL" ? (
           <Groupe label={t("lieu")} erreur={msg(e.lieuType?.message)}>

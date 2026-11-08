@@ -12,6 +12,7 @@ import { ilYa } from "@/lib/format";
 const ICONES: Record<TypeNotification, { chemin: string; teinte: string }> = {
   SESSION_PROPOSEE: { chemin: "M5 5h14v15H5zM5 9h14M9 3v4M15 3v4", teinte: "bg-marque-doux text-marque-fonce" },
   SESSION_ACCEPTEE: { chemin: "M5 5h14v15H5zM5 9h14M9 3v4M15 3v4", teinte: "bg-marque-doux text-marque-fonce" },
+  LIEN_SESSION: { chemin: "M4 6h10v12H4zM14 10l6-3v10l-6-3", teinte: "bg-marque-doux text-marque-fonce" },
   SESSION_REFUSEE: { chemin: "M5 5h14v15H5zM5 9h14M9 3v4M15 3v4", teinte: "bg-[#eaeee9] text-[#33403a]" },
   NOUVEAU_MESSAGE: { chemin: "M4 5h16v11H9l-5 4z", teinte: "bg-[#eaeee9] text-[#33403a]" },
   RAPPEL_AVIS: { chemin: "M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z", teinte: "bg-avertissement-doux text-avertissement" },
@@ -26,6 +27,7 @@ const DESTINATION: Partial<Record<TypeNotification, string>> = {
   SESSION_PROPOSEE: "/sessions",
   SESSION_ACCEPTEE: "/sessions",
   SESSION_REFUSEE: "/sessions",
+  LIEN_SESSION: "/sessions",
   RAPPEL_AVIS: "/sessions",
   NOUVEAU_MESSAGE: "/messages",
   NOUVELLE_SUGGESTION: "/accueil",

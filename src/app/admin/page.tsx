@@ -55,10 +55,13 @@ export default function PageAdmin() {
 
   return (
     <main className="mx-auto flex w-full max-w-[1000px] flex-1 flex-col gap-6 px-5 pb-10 pt-7">
-      <header className="flex items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight">{t("titre")}</h1>
         <Link href="/admin/administrateurs" className="flex min-h-11 items-center rounded-xl border-[1.5px] border-trait bg-surface px-4 text-sm font-bold">
           {t("gererAdmins")}
+        </Link>
+        <Link href="/admin/parametres" className="flex min-h-11 items-center rounded-xl border-[1.5px] border-trait bg-surface px-4 text-sm font-bold">
+          {t("gererParametres")}
         </Link>
         <Link href="/accueil" className="flex min-h-11 items-center rounded-xl border-[1.5px] border-trait bg-surface px-4 text-sm font-bold">
           {t("voirApp")}

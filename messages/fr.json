@@ -9,6 +9,8 @@
     "chargement": "Un instant…"
   },
   "errors": {
+    "enRevision": "Cette fonctionnalité est momentanément en révision. Réessaie un peu plus tard.",
+    "tropDePropositions": "Tu as déjà proposé 5 compétences aujourd'hui. Réessaie demain.",
     "creneauChevauche": "Ce créneau chevauche un de tes créneaux existants.",
     "creneauPris": "Ce créneau vient d'être réservé par quelqu'un d'autre. Choisis-en un autre.",
     "dejaSignale": "Tu as déjà un signalement en cours contre ce membre.",
@@ -94,6 +96,7 @@
     "valider": "Valider le code",
     "renvoyer": "Renvoyer le code",
     "limites": "5 essais au plus par code. Sans numéro vérifié, tu peux parcourir les profils mais pas écrire ni proposer de session.",
+    "continuerSans": "Continuer sans vérifier",
     "plusTard": "Plus tard",
     "codeDeTest": "Code de test (développement) : {code}",
     "codeConsole": "En développement, le code est affiché dans la console de l'API.",
@@ -125,6 +128,13 @@
     "aucune": "Aucune compétence pour l'instant.",
     "competence": "Compétence",
     "choisir": "Choisir…",
+    "rechercherPlaceholder": "Tape un mot : maths, couture, guitare…",
+    "parCategorie": "Ou parcourir par catégorie",
+    "changer": "Changer",
+    "pasTrouve": "Je ne trouve pas « {terme} » : l'ajouter",
+    "proposerAide": "Choisis la catégorie la plus proche. Si une compétence équivalente existe déjà, c'est elle qui sera utilisée.",
+    "categorie": "Catégorie",
+    "proposerBouton": "Ajouter « {terme} » au catalogue",
     "niveau": "Niveau",
     "format": "Format",
     "preuve": "Lien vers une réalisation (facultatif)",
@@ -182,6 +192,8 @@
     "avis": "{note} sur 5 ({count, plural, =0 {aucun avis} one {# avis} other {# avis}})",
     "nouveau": "nouveau membre",
     "champ": "Compétence recherchée",
+    "proches": "Compétences proches (touche pour préciser)",
+    "aucuneProche": "Aucune compétence du catalogue ne ressemble à « {terme} ». Essaie un mot plus simple, ou un synonyme.",
     "placeholder": "Python, anglais, cuisine…",
     "resultatsPour": "{count, plural, one {# membre propose « {terme} »} other {# membres proposent « {terme} »}}",
     "formatGroupe": "Format",
@@ -292,6 +304,11 @@
     "NON_REALISEE": "Non réalisée"
   },
   "sessions": {
+    "visio": "Lien de la visioconférence",
+    "visioAide": "Crée un appel gratuit (Google Meet, Jitsi, WhatsApp…) et colle ici son lien https. {pseudo} le verra ici.",
+    "rejoindre": "Rejoindre l'appel",
+    "changerLien": "Changer le lien",
+    "enregistrerLien": "Enregistrer le lien",
     "titre": "Tes sessions",
     "aucune": "Aucune session pour l'instant. Propose-en une depuis une conversation.",
     "recue": "Proposition reçue de {pseudo}",
@@ -419,7 +436,47 @@
     "maintenant": "À l'instant",
     "hier": "Hier"
   },
+  "parametres": {
+    "enRevision": "{fonction} : en révision",
+    "noms": {
+      "verification_telephone": "Vérification du téléphone",
+      "inscriptions": "Inscriptions",
+      "propositions_competences": "Ajout de nouvelles compétences",
+      "recherche_semantique": "Recherche par le sens",
+      "sessions_distance": "Sessions à distance",
+      "notifications_push": "Notifications sur l'appareil"
+    },
+    "defaut": {
+      "verification_telephone": "La vérification du numéro de téléphone est suspendue pour le moment. Tu peux continuer sans, elle te sera demandée plus tard si besoin.",
+      "inscriptions": "Les nouvelles inscriptions sont suspendues pour le moment. Reviens bientôt.",
+      "propositions_competences": "L'ajout de nouvelles compétences est suspendu pour le moment. Choisis-en une dans la liste.",
+      "recherche_semantique": "La recherche par le sens est suspendue ; la recherche classique reste disponible.",
+      "sessions_distance": "Les sessions à distance sont suspendues pour le moment. Propose une session en présentiel.",
+      "notifications_push": "Les notifications sur l'appareil sont suspendues pour le moment."
+    },
+    "titre": "Paramètres et fonctionnalités",
+    "intro": "Mets une fonctionnalité en révision : elle est refusée par le serveur et les membres voient un bandeau « en révision » en quelques secondes. Chaque changement demande ton mot de passe et est inscrit au journal d'audit.",
+    "descriptions": {
+      "verification_telephone": "Code SMS à l'inscription et exigence d'un numéro vérifié pour écrire ou proposer une session.",
+      "inscriptions": "Création de nouveaux comptes.",
+      "propositions_competences": "Possibilité pour les membres d'ajouter une compétence absente du catalogue.",
+      "recherche_semantique": "Suggestions par le sens (« faire des gâteaux » → Pâtisserie). La recherche classique reste active.",
+      "sessions_distance": "Proposition de sessions en visioconférence.",
+      "notifications_push": "Envoi de notifications sur l'appareil des membres."
+    },
+    "actif": "Actif",
+    "enRevisionEtat": "En révision",
+    "message": "Message affiché aux membres (facultatif)",
+    "messagePlaceholder": "Ex. : Le fournisseur de SMS est en cours de changement, retour prévu lundi.",
+    "mettreEnRevision": "Mettre en révision",
+    "reactiver": "Réactiver",
+    "enregistrerMessage": "Enregistrer le message",
+    "enregistre": "Enregistré.",
+    "modifiePar": "Dernière modification : {date}",
+    "retourAdmin": "Retour à l'administration"
+  },
   "admin": {
+    "gererParametres": "Paramètres et fonctionnalités",
     "titre": "Modération et indicateurs",
     "voirApp": "Voir l'application",
     "gererAdmins": "Gérer les administrateurs",

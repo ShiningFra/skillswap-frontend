@@ -3,7 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Alerte, Bouton, Ecran, LienRetour, Titre } from "@/components/ui";
+import { BandeauRevision } from "@/components/bandeau-revision";
 import { ApiError } from "@/lib/api";
+import { useParametres } from "@/lib/parametres";
 import { activerPush, desactiverPush, etatPush } from "@/lib/push";
 
 export default function PageNotificationsAppareil() {
@@ -14,19 +16,21 @@ export default function PageNotificationsAppareil() {
   const rafraichir = () => qc.invalidateQueries({ queryKey: ["push", "etat"] });
   const activer = useMutation({ mutationFn: activerPush, onSuccess: rafraichir, onError: rafraichir });
   const desactiver = useMutation({ mutationFn: desactiverPush, onSuccess: rafraichir });
+  const pushOk = useParametres().actif("notifications_push");
   const e = etat.data;
 
   return (
     <Ecran nav>
       <LienRetour href="/compte" label={te("common.retour")} />
       <Titre sousTitre={t("pushIntro")}>{t("pushTitre")}</Titre>
+      <BandeauRevision cle="notifications_push" />
       {e === "actif" ? <Alerte>{t("pushActif")}</Alerte> : null}
       {e === "inactif" ? <Alerte ton="avertissement">{t("pushInactif")}</Alerte> : null}
       {e === "refuse" ? <Alerte ton="danger">{t("pushRefuse")}</Alerte> : null}
       {e === "indisponible" ? <Alerte ton="avertissement">{t("pushIndisponible")}</Alerte> : null}
       {e === "ios-installer" ? <Alerte ton="avertissement">{t("pushIphone")}</Alerte> : null}
       {activer.error ? <Alerte ton="danger">{te(activer.error instanceof ApiError ? activer.error.cle : "errors.generique")}</Alerte> : null}
-      {e === "inactif" ? (
+      {e === "inactif" && pushOk ? (
         <Bouton type="button" onClick={() => activer.mutate()} disabled={activer.isPending}>
           {t("pushActiver")}
         </Bouton>

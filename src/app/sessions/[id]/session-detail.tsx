@@ -2,10 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { useCatalogue } from "@/lib/catalogue";
 import { Alerte, Bouton, CARTE, Ecran, LienBouton, LienRetour, Pastille, Titre } from "@/components/ui";
 import { prenom } from "@/lib/format";
-import { ApiError, confirmerRealisation, declarerAbsence, obtenirSession, repondreProposition } from "@/lib/api";
+import { ApiError, confirmerRealisation, declarerAbsence, definirLienSession, obtenirSession, repondreProposition } from "@/lib/api";
 
 export function SessionDetail({ id }: { id: string }) {
   const { libelle } = useCatalogue();
@@ -20,7 +21,9 @@ export function SessionDetail({ id }: { id: string }) {
   const repondre = useMutation({ mutationFn: (accepter: boolean) => repondreProposition(id, accepter), onSuccess: rafraichir });
   const confirmer = useMutation({ mutationFn: () => confirmerRealisation(id), onSuccess: rafraichir });
   const absence = useMutation({ mutationFn: () => declarerAbsence(id), onSuccess: rafraichir });
-  const erreurMutation = repondre.error ?? confirmer.error ?? absence.error;
+  const [lienSaisi, setLienSaisi] = useState<string | null>(null);
+  const lien = useMutation({ mutationFn: (v: string) => definirLienSession(id, v), onSuccess: () => { setLienSaisi(null); rafraichir(); } });
+  const erreurMutation = repondre.error ?? confirmer.error ?? absence.error ?? lien.error;
   const occupe = repondre.isPending || confirmer.isPending || absence.isPending;
   const message = (e: unknown) => te(e instanceof ApiError ? e.cle : "errors.generique");
 
@@ -73,6 +76,35 @@ export function SessionDetail({ id }: { id: string }) {
             {t("refuser")}
           </Bouton>
         </div>
+      ) : null}
+
+      {s.format === "DISTANCE" && s.statut === "ACCEPTEE" ? (
+        <section className={`${CARTE} flex flex-col gap-3 px-4 py-3.5`}>
+          <h2 className="text-base font-extrabold">{t("visio")}</h2>
+          {s.lien && lienSaisi === null ? (
+            <>
+              <LienBouton href={s.lien} target="_blank" rel="noopener noreferrer">{t("rejoindre")}</LienBouton>
+              <button type="button" onClick={() => setLienSaisi(s.lien ?? "")} className="min-h-11 text-sm font-bold text-marque">
+                {t("changerLien")}
+              </button>
+            </>
+          ) : (
+            <form
+              noValidate
+              className="flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                lien.mutate((lienSaisi ?? "").trim());
+              }}
+            >
+              <p className="text-sm text-discret">{t("visioAide", { pseudo })}</p>
+              <input type="url" inputMode="url" aria-label={t("visio")} placeholder="https://meet.jit.si/…" value={lienSaisi ?? ""} onChange={(e) => setLienSaisi(e.target.value)} className="min-h-[50px] rounded-xl border-[1.5px] border-bord bg-surface px-3 text-base" />
+              <Bouton type="submit" disabled={lien.isPending || !(lienSaisi ?? "").trim()}>
+                {t("enregistrerLien")}
+              </Bouton>
+            </form>
+          )}
+        </section>
       ) : null}
 
       {s.statut === "ACCEPTEE" && !heurePassee ? <Alerte>{t("aVenir", { date: s.creneauLibelle })}</Alerte> : null}

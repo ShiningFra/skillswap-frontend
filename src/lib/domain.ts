@@ -44,6 +44,8 @@ export interface Competence {
   categorieId: string;
   /** Nom de la catégorie, pour « Informatique, code · À distance ». */
   categorie?: string;
+  /** Autres noms de la compétence, séparés par des points-virgules (« maths;algèbre »), utilisés par la recherche. */
+  synonymes?: string;
 }
 
 export interface DeclarationCompetence {
@@ -132,6 +134,8 @@ export interface SessionEchange {
   dateHeure?: string;
   format: "PRESENTIEL" | "DISTANCE";
   lieuType?: TypeLieu;
+  /** Lien de visioconférence d'une session à distance acceptée, saisi librement par l'un des deux membres. */
+  lien?: string;
   contrepartie: Contrepartie;
   statut: StatutSession;
   proposeParMoi: boolean;
@@ -143,7 +147,7 @@ export interface SessionEchange {
   avisDonne: boolean;
 }
 
-export type TypeNotification = "NOUVEAU_MESSAGE" | "NOUVELLE_SUGGESTION" | "SESSION_PROPOSEE" | "SESSION_ACCEPTEE" | "SESSION_REFUSEE" | "RAPPEL_AVIS" | "AVERTISSEMENT_ABSENCE" | "SUSPENSION" | "AVERTISSEMENT";
+export type TypeNotification = "NOUVEAU_MESSAGE" | "NOUVELLE_SUGGESTION" | "SESSION_PROPOSEE" | "SESSION_ACCEPTEE" | "SESSION_REFUSEE" | "RAPPEL_AVIS" | "AVERTISSEMENT_ABSENCE" | "SUSPENSION" | "AVERTISSEMENT" | "LIEN_SESSION";
 
 export interface Notification {
   id: string;
@@ -184,3 +188,22 @@ export interface SignalementAdminDetail {
   historique: { sessionsRealisees: number; absences: number; signalementsRecus: number; signaleursDistincts: number; noteMoyenne: number | null };
 }
 export type DecisionModeration = "AVERTIR" | "SUSPENDRE" | "REJETER";
+
+/** Fonctionnalités que l'administration peut mettre « en révision » (même liste que l'API). */
+export const CLES_PARAMETRES = [
+  "verification_telephone",
+  "inscriptions",
+  "propositions_competences",
+  "recherche_semantique",
+  "sessions_distance",
+  "notifications_push",
+] as const;
+export type CleParametre = (typeof CLES_PARAMETRES)[number];
+
+export interface Parametre {
+  cle: CleParametre;
+  actif: boolean;
+  /** Message affiché aux membres quand la fonctionnalité est en révision (optionnel). */
+  message: string | null;
+  modifieLe?: string;
+}

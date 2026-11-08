@@ -6,7 +6,8 @@
  * En mode réel, recherche, profils, conversations, sessions, avis et signalements passent aussi par l'API.
  * Les erreurs portent une clé de traduction (section « errors » de messages/fr.json).
  */
-import { CONFIRMATION } from "./domain";
+import { CLES_PARAMETRES, CONFIRMATION } from "./domain";
+import type { CleParametre, Parametre } from "./domain";
 import type {
   DecisionModeration,
   IndicateursAdmin,
@@ -220,6 +221,28 @@ export async function listerCompetences(): Promise<Competence[]> {
     ...c,
     categorie: CATEGORIES.find((k) => k.id === c.categorieId)?.libelle,
   }));
+}
+
+/** Voisines « par le sens » d'un texte libre (liste vide si la fonction est coupée ou en mode simulé). */
+export async function competencesProchesDuSens(q: string): Promise<{ id: string; score: number }[]> {
+  if (!MODE_REEL) return [];
+  try {
+    return await appel("GET", `/competences/proches?q=${encodeURIComponent(q)}`);
+  } catch {
+    return [];
+  }
+}
+
+/** Propose une compétence absente du catalogue ; si une équivalente existe, elle est renvoyée (`existait`). */
+export async function proposerCompetence(v: { libelle: string; categorieId: string }): Promise<Competence & { existait: boolean }> {
+  if (MODE_REEL) return appel("POST", "/competences", v);
+  await pause(150);
+  const cle = (t: string) => t.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const trouvee = COMPETENCES.find((c) => cle(c.libelle) === cle(v.libelle));
+  if (trouvee) return { ...trouvee, existait: true };
+  const neuve: Competence = { id: `comp-${Date.now()}`, libelle: v.libelle.trim(), categorieId: v.categorieId, categorie: CATEGORIES.find((k) => k.id === v.categorieId)?.libelle };
+  COMPETENCES.push(neuve);
+  return { ...neuve, existait: false };
 }
 
 export async function listerDeclarations(): Promise<DeclarationCompetence[]> {
@@ -480,7 +503,7 @@ export async function ouvrirConversation(
 ): Promise<{ id: string }> {
   if (MODE_REEL) return appel("POST", "/conversations", { membreId });
   await pause();
-  if (!etat.telephoneVerifie) throw new ApiError("errors.telephoneRequis");
+  if (!etat.telephoneVerifie && PARAMETRES_SIMULES.find((p) => p.cle === "verification_telephone")?.actif) throw new ApiError("errors.telephoneRequis");
   if (!PROFILS.some((p) => p.id === membreId))
     throw new ApiError("errors.introuvable");
   const existante = conversations.find((c) => c.membreId === membreId);
@@ -602,7 +625,7 @@ export async function proposerSession(
     return appel("POST", `/conversations/${conversationId}/sessions`, valeurs);
   }
   await pause();
-  if (!etat.telephoneVerifie) throw new ApiError("errors.telephoneRequis");
+  if (!etat.telephoneVerifie && PARAMETRES_SIMULES.find((p) => p.cle === "verification_telephone")?.actif) throw new ApiError("errors.telephoneRequis");
   const c = conversations.find((x) => x.id === conversationId);
   const p = c && PROFILS.find((x) => x.id === c.membreId);
   const creneau = p?.creneaux.find((cr) => cr.id === valeurs.creneauId);
@@ -654,6 +677,16 @@ export async function repondreProposition(
   if (s.statut !== "PROPOSEE" || s.proposeParMoi)
     throw new ApiError("errors.generique");
   s.statut = accepter ? "ACCEPTEE" : "REFUSEE";
+}
+
+/** Lien de visioconférence d'une session à distance acceptée (Meet, Jitsi, WhatsApp…) ; vide pour le retirer. */
+export async function definirLienSession(id: string, lien: string): Promise<void> {
+  if (MODE_REEL) return appel("PUT", `/sessions/${id}/lien`, { lien });
+  await pause();
+  const s = session(id);
+  if (s.format !== "DISTANCE" || s.statut !== "ACCEPTEE") throw new ApiError("errors.generique");
+  if (lien && !/^https:\/\/\S+$/i.test(lien.trim())) throw new ApiError("errors.lien");
+  s.lien = lien.trim() || undefined;
 }
 
 /** RG11 : la session devient REALISEE quand les deux participants ont confirmé. */
@@ -1073,4 +1106,31 @@ export async function reinitialiserMotDePasse(
     return appel("POST", "/auth/reinitialisation", { jeton, nouveau });
   await pause(200);
   if (jeton.length < 20) throw new ApiError("errors.jetonInvalide");
+}
+
+const PARAMETRES_SIMULES: Parametre[] = CLES_PARAMETRES.map((cle) => ({ cle, actif: true, message: null }));
+
+/** Public : état de chaque fonctionnalité, pour afficher « en révision » aux membres. */
+export async function listerParametres(): Promise<Parametre[]> {
+  if (MODE_REEL) return appel("GET", "/parametres");
+  await pause(50);
+  return PARAMETRES_SIMULES.map((p) => ({ ...p }));
+}
+
+export async function listerParametresAdmin(): Promise<Parametre[]> {
+  if (MODE_REEL) return appel("GET", "/admin/parametres");
+  await pause(100);
+  return PARAMETRES_SIMULES.map((p) => ({ ...p }));
+}
+
+/** Active ou met en révision une fonctionnalité ; demande le mot de passe de l'administrateur. */
+export async function modifierParametre(cle: CleParametre, v: { actif: boolean; message: string | null; motDePasse: string }): Promise<void> {
+  if (MODE_REEL) return appel("PUT", `/admin/parametres/${cle}`, v);
+  await pause(150);
+  if (!v.motDePasse) throw new ApiError("errors.identifiants");
+  const p = PARAMETRES_SIMULES.find((x) => x.cle === cle);
+  if (!p) throw new ApiError("errors.introuvable");
+  p.actif = v.actif;
+  p.message = v.message;
+  p.modifieLe = new Date().toISOString();
 }
