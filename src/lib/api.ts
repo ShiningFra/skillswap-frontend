@@ -409,8 +409,17 @@ const PROFILS: ProfilMembre[] = [
 ];
 
 export interface CritereRecherche {
-  competenceId?: string;
+  /** Toutes les compétences proches du texte tapé : une seule requête les recherche ensemble. */
+  competenceIds?: string[];
   format?: Format;
+  decalage?: number;
+  limite?: number;
+}
+
+/** Une page de résultats : `suite` annonce qu'il y en a d'autres (bouton « Voir plus »). */
+export interface PageProfils {
+  resultats: ProfilMembre[];
+  suite: boolean;
 }
 
 /** Les formats se recoupent : « les deux » convient à une recherche présentiel comme à distance. */
@@ -433,6 +442,7 @@ interface ResultatRecherche {
     confirmee: boolean;
   }[];
   reciproques: string[];
+  raison?: ProfilMembre["raison"];
 }
 
 /** La recherche renvoie une fiche courte ; on la présente comme un profil dont seule l'offre trouvée est connue. */
@@ -457,28 +467,33 @@ function depuisRecherche(r: ResultatRecherche): ProfilMembre {
   };
 }
 
-export async function rechercherProfils({
-  competenceId,
-  format,
-}: CritereRecherche): Promise<ProfilMembre[]> {
+const TAILLE_PAGE = 20;
+
+export async function rechercherProfils({ competenceIds, format, decalage = 0, limite = TAILLE_PAGE }: CritereRecherche): Promise<PageProfils> {
   if (MODE_REEL) {
     const q = new URLSearchParams();
-    if (competenceId) q.set("competenceId", competenceId);
+    if (competenceIds?.length) q.set("competenceIds", competenceIds.join(","));
     if (format) q.set("format", format);
-    const res = await appel<ResultatRecherche[]>(
-      "GET",
-      `/profils${q.size ? `?${q}` : ""}`,
-    );
-    return res.map(depuisRecherche);
+    q.set("limite", String(limite));
+    q.set("decalage", String(decalage));
+    const res = await appel<{ resultats: ResultatRecherche[]; suite: boolean }>("GET", `/profils?${q}`);
+    return { resultats: res.resultats.map(depuisRecherche), suite: res.suite };
   }
   await pause(200);
-  return PROFILS.filter((p) =>
-    p.offertes.some(
-      (o) =>
-        (!competenceId || o.competenceId === competenceId) &&
-        compatible(o.format, format),
-    ),
-  ).sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+  const tous = PROFILS.filter((p) => p.offertes.some((o) => (!competenceIds?.length || competenceIds.includes(o.competenceId)) && compatible(o.format, format))).sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+  return { resultats: tous.slice(decalage, decalage + limite), suite: tous.length > decalage + limite };
+}
+
+/** Accueil : les membres les plus pertinents d'abord (échange réciproque, puis ce que je cherche, puis ce que je propose). */
+export async function listerSuggestions({ decalage = 0, limite = 10 }: { decalage?: number; limite?: number }): Promise<PageProfils> {
+  if (MODE_REEL) {
+    const res = await appel<{ resultats: ResultatRecherche[]; suite: boolean }>("GET", `/suggestions?limite=${limite}&decalage=${decalage}`);
+    return { resultats: res.resultats.map(depuisRecherche), suite: res.suite };
+  }
+  const decl = await listerDeclarations();
+  const cherche = decl.filter((d) => d.sens === "RECHERCHEE").map((d) => d.competenceId);
+  const page = await rechercherProfils({ competenceIds: cherche.length ? cherche : undefined, decalage, limite });
+  return { ...page, resultats: page.resultats.map((p) => ({ ...p, raison: cherche.length ? ("offre" as const) : ("proximite" as const) })) };
 }
 
 export async function obtenirProfil(id: string): Promise<ProfilMembre> {

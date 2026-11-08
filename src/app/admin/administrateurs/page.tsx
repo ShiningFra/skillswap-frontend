@@ -74,7 +74,7 @@ export default function PageAdministrateurs() {
         <Link href="/admin" className="text-sm font-bold text-marque">
           ← {t("retourAdmin")}
         </Link>
-        <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight">{t("adminsTitre")}</h1>
+        <h1 className="pr-12 text-[1.75rem] font-extrabold leading-tight tracking-tight">{t("adminsTitre")}</h1>
         <p className="text-sm text-discret">{t("adminsIntro")}</p>
       </header>
 

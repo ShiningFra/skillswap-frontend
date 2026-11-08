@@ -97,7 +97,7 @@ function ChoixCompetence({ catalogue, valeur, erreur, surChoix }: { catalogue: C
     return [...m].map(([id, libelle]) => ({ id, libelle })).sort((a, b) => a.libelle.localeCompare(b.libelle, "fr"));
   }, [catalogue]);
   const choisie = catalogue.find((c) => c.id === valeur);
-  const sens = useProchesDuSens(texte);
+  const { voisines: sens } = useProchesDuSens(texte);
   const propositions = texte.trim() ? fusionner(classer(texte, catalogue, 8), sens, catalogue, 8).map((r) => r.competence) : categorie ? catalogue.filter((c) => c.categorieId === categorie) : [];
   const proposer = useMutation({
     mutationFn: proposerCompetence,

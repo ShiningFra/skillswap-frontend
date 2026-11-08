@@ -1,31 +1,22 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { CarteSuggestion } from "@/components/carte-membre";
 import { Ecran, LienBouton } from "@/components/ui";
-import { listerDeclarations, obtenirMoi, rechercherProfils } from "@/lib/api";
-import type { ProfilMembre } from "@/lib/domain";
-
-/** Suggestions : les membres qui offrent ce que je cherche, les plus proches d'abord. À défaut, les membres les plus proches. */
-async function suggestions(): Promise<{ profils: { p: ProfilMembre; competenceId?: string }[]; mesOffres: string[] }> {
-  const decl = await listerDeclarations();
-  const cherche = decl.filter((d) => d.sens === "RECHERCHEE").map((d) => d.competenceId);
-  const mesOffres = decl.filter((d) => d.sens === "OFFERTE").map((d) => d.competenceId);
-  const lots = cherche.length > 0 ? await Promise.all(cherche.map((c) => rechercherProfils({ competenceId: c }).then((r) => r.map((p) => ({ p, competenceId: c }))))) : [(await rechercherProfils({})).map((p) => ({ p, competenceId: undefined }))];
-  const vus = new Set<string>();
-  const profils = lots
-    .flat()
-    .filter(({ p }) => !vus.has(p.id) && vus.add(p.id))
-    .sort((a, b) => (a.p.distanceKm ?? Infinity) - (b.p.distanceKm ?? Infinity));
-  return { profils, mesOffres };
-}
+import { listerSuggestions, obtenirMoi } from "@/lib/api";
 
 export default function PageAccueil() {
   const t = useTranslations("accueil");
   const te = useTranslations();
   const moi = useQuery({ queryKey: ["moi"], queryFn: obtenirMoi });
-  const sugg = useQuery({ queryKey: ["suggestions"], queryFn: suggestions });
+  const sugg = useInfiniteQuery({
+    queryKey: ["suggestions"],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => listerSuggestions({ decalage: pageParam }),
+    getNextPageParam: (derniere, pages) => (derniere.suite ? pages.reduce((n, p) => n + p.resultats.length, 0) : undefined),
+  });
+  const profils = sugg.data?.pages.flatMap((p) => p.resultats) ?? [];
   return (
     <Ecran nav>
       <header className="flex items-start justify-between gap-3 pr-12">
@@ -37,19 +28,24 @@ export default function PageAccueil() {
       <p className="-mt-2 text-[0.9375rem] leading-relaxed text-discret">{t("intro")}</p>
 
       {sugg.isPending ? <p className="text-sm text-discret">{te("common.chargement")}</p> : null}
-      {sugg.data?.profils.length === 0 ? (
+      {!sugg.isPending && profils.length === 0 ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-discret">{t("aucune")}</p>
           <LienBouton href="/competences">{t("complete")}</LienBouton>
         </div>
       ) : null}
       <ul className="flex flex-col gap-3">
-        {sugg.data?.profils.map(({ p, competenceId }) => (
+        {profils.map((p) => (
           <li key={p.id}>
-            <CarteSuggestion p={p} competenceId={competenceId} mesOffres={sugg.data.mesOffres} />
+            <CarteSuggestion p={p} />
           </li>
         ))}
       </ul>
+      {sugg.hasNextPage ? (
+        <button type="button" disabled={sugg.isFetchingNextPage} onClick={() => sugg.fetchNextPage()} className="min-h-12 rounded-xl border-[1.5px] border-bord bg-surface px-4 text-[0.9375rem] font-bold text-marque disabled:opacity-60">
+          {sugg.isFetchingNextPage ? te("common.chargement") : t("voirPlus")}
+        </button>
+      ) : null}
     </Ecran>
   );
 }

@@ -104,6 +104,8 @@ export interface ProfilMembre {
   recherchees: string[];
   avis: Avis[];
   creneaux: Creneau[];
+  /** Pourquoi ce membre est suggéré à l'accueil : échange réciproque, il offre ce que je cherche, il cherche ce que j'offre, ou simple proximité. */
+  raison?: "mutuel" | "offre" | "demande" | "proximite";
 }
 
 export interface Message {
@@ -147,7 +149,7 @@ export interface SessionEchange {
   avisDonne: boolean;
 }
 
-export type TypeNotification = "NOUVEAU_MESSAGE" | "NOUVELLE_SUGGESTION" | "SESSION_PROPOSEE" | "SESSION_ACCEPTEE" | "SESSION_REFUSEE" | "RAPPEL_AVIS" | "AVERTISSEMENT_ABSENCE" | "SUSPENSION" | "AVERTISSEMENT" | "LIEN_SESSION";
+export type TypeNotification = "NOUVEAU_MESSAGE" | "NOUVELLE_SUGGESTION" | "SESSION_PROPOSEE" | "SESSION_ACCEPTEE" | "SESSION_REFUSEE" | "RAPPEL_AVIS" | "AVERTISSEMENT_ABSENCE" | "SUSPENSION" | "AVERTISSEMENT" | "LIEN_SESSION" | "NOUVEAU_SIGNALEMENT";
 
 export interface Notification {
   id: string;

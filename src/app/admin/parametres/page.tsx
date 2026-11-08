@@ -46,7 +46,7 @@ export default function PageParametres() {
         <Link href="/admin" className="text-sm font-bold text-marque">
           ← {t("retourAdmin")}
         </Link>
-        <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight">{t("titre")}</h1>
+        <h1 className="pr-12 text-[1.75rem] font-extrabold leading-tight tracking-tight">{t("titre")}</h1>
         <p className="text-sm text-discret">{t("intro")}</p>
       </header>
 

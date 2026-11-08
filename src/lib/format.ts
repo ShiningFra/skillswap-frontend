@@ -14,7 +14,8 @@ export function badgeCompetence(o: CompetenceOfferte): Badge {
   return o.preuveFournie ?? Boolean(o.preuveUrl) ? "preuve" : "declarative";
 }
 
-export const offreCorrespondante = (p: ProfilMembre, competenceId?: string) =>
+/** L'offre mise en avant : celle de la compétence demandée, sinon la première ; absente pour qui ne fait que chercher. */
+export const offreCorrespondante = (p: ProfilMembre, competenceId?: string): CompetenceOfferte | undefined =>
   p.offertes.find((o) => !competenceId || o.competenceId === competenceId) ?? p.offertes[0];
 
 /** « Il y a 2 h », « Hier », puis le jour de la semaine, puis la date. */

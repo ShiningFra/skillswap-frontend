@@ -1,13 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CarteRecherche } from "@/components/carte-membre";
 import { Ecran, Titre } from "@/components/ui";
 import { rechercherProfils } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
-import type { Format, ProfilMembre } from "@/lib/domain";
+import type { Format } from "@/lib/domain";
 import { normaliser } from "@/lib/format";
 import { classer, fusionner } from "@/lib/recherche-floue";
 import { useProchesDuSens } from "@/lib/semantique";
@@ -22,22 +22,27 @@ export default function PageRecherche() {
   const [format, setFormat] = useState<Format | "">("");
   const mot = normaliser(terme);
   // Les compétences les plus proches du texte (synonymes, fautes de frappe, catégorie) sont toutes cherchées.
-  const sens = useProchesDuSens(terme);
+  const { voisines: sens, enCours: sensEnCours } = useProchesDuSens(terme);
   const proches = mot ? fusionner(classer(terme, liste, 8), sens, liste, 8) : [];
   const ids = proches.filter((r) => r.score >= proches[0].score - 45).slice(0, 6).map((r) => r.competence.id);
-  const { data, isPending } = useQuery({
-    queryKey: ["recherche", mot, ids.join(","), format],
-    enabled: !mot || liste.length > 0,
-    queryFn: async () => {
-      if (mot && ids.length === 0) return [] as { p: ProfilMembre; competenceId?: string }[];
-      const lots = await Promise.all((ids.length > 0 ? ids : [undefined]).map((c) => rechercherProfils({ competenceId: c, format: format || undefined }).then((r) => r.map((p) => ({ p, competenceId: c })))));
-      const vus = new Set<string>();
-      return lots
-        .flat()
-        .filter(({ p }) => !vus.has(p.id) && vus.add(p.id))
-        .sort((a, b) => (a.p.distanceKm ?? Infinity) - (b.p.distanceKm ?? Infinity));
-    },
+  // Une seule requête par recherche, lancée 350 ms après la dernière frappe (le serveur limite le nombre de recherches).
+  const cle = ids.join(",");
+  const [cleStable, setCleStable] = useState(cle);
+  useEffect(() => {
+    const t = setTimeout(() => setCleStable(cle), 350);
+    return () => clearTimeout(t);
+  }, [cle]);
+  const idsStables = cleStable ? cleStable.split(",") : [];
+  const aucuneCorrespondance = Boolean(mot) && liste.length > 0 && ids.length === 0 && !sensEnCours;
+  const resultats = useInfiniteQuery({
+    queryKey: ["recherche", cleStable, format],
+    enabled: !aucuneCorrespondance && (!mot || (liste.length > 0 && cleStable === cle)),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => rechercherProfils({ competenceIds: idsStables.length ? idsStables : undefined, format: format || undefined, decalage: pageParam }),
+    getNextPageParam: (derniere, pages) => (derniere.suite ? pages.reduce((n, p) => n + p.resultats.length, 0) : undefined),
   });
+  const data = aucuneCorrespondance ? [] : resultats.data?.pages.flatMap((p) => p.resultats);
+  const isPending = !aucuneCorrespondance && resultats.isPending;
 
   return (
     <Ecran nav>
@@ -62,7 +67,7 @@ export default function PageRecherche() {
           </div>
         </div>
       ) : null}
-      {mot && liste.length > 0 && proches.length === 0 ? <p className="text-sm text-discret">{t("aucuneProche", { terme: terme.trim() })}</p> : null}
+      {mot && liste.length > 0 && proches.length === 0 ? <p aria-live="polite" className="text-sm text-discret">{sensEnCours ? t("rechercheEnCours") : t("aucuneProche", { terme: terme.trim() })}</p> : null}
 
       <div role="group" aria-label={t("formatGroupe")} className="flex gap-2 overflow-x-auto">
         {FORMATS_FILTRE.map((f) => (
@@ -74,15 +79,20 @@ export default function PageRecherche() {
 
       <div aria-live="polite" className="flex flex-col gap-3">
         {isPending ? <p className="text-sm text-discret">{te("common.chargement")}</p> : null}
-        {data ? <p className="text-[0.8125rem] font-semibold text-discret">{mot ? t("resultatsPour", { count: data.length, terme: terme.trim() }) : t("resultatsTous", { count: data.length })}</p> : null}
+        {data ? <p className="text-[0.8125rem] font-semibold text-discret">{mot ? t(!aucuneCorrespondance && resultats.hasNextPage ? "resultatsPourPlus" : "resultatsPour", { count: data.length, terme: terme.trim() }) : t(!aucuneCorrespondance && resultats.hasNextPage ? "resultatsTousPlus" : "resultatsTous", { count: data.length })}</p> : null}
         {data?.length === 0 ? <p className="text-sm text-discret">{t("aucun")}</p> : null}
         <ul className="flex flex-col gap-3">
-          {data?.map(({ p, competenceId }) => (
+          {data?.map((p) => (
             <li key={p.id}>
-              <CarteRecherche p={p} competenceId={competenceId} />
+              <CarteRecherche p={p} />
             </li>
           ))}
         </ul>
+        {!aucuneCorrespondance && resultats.hasNextPage ? (
+          <button type="button" disabled={resultats.isFetchingNextPage} onClick={() => resultats.fetchNextPage()} className="min-h-12 rounded-xl border-[1.5px] border-bord bg-surface px-4 text-[0.9375rem] font-bold text-marque disabled:opacity-60">
+            {resultats.isFetchingNextPage ? te("common.chargement") : t("voirPlus")}
+          </button>
+        ) : null}
       </div>
     </Ecran>
   );
